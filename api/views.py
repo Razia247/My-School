@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from .models import  School,Classes,Syllabus,Department,Staff,Student,Designation,Section
 from .serializers import SchoolSerializer,ClassesSerializer,SyllabusSerializer,DepartmentSerializer,StaffSerializer,StudentSerializer,DesignationSerializer,SectionSerializer
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListCreateAPIView, RetrieveUpdateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.mixins import ListModelMixin,CreateModelMixin,RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin
 # Create your views here.
+from rest_framework import status
+from rest_framework.response import Response
 
 class LCSchoolApi(GenericAPIView,ListModelMixin,CreateModelMixin):
     queryset = School.objects.all()
@@ -110,14 +112,24 @@ class RUDStaffApi(GenericAPIView,RetrieveModelMixin,UpdateModelMixin,DestroyMode
         return self.destroy(request,*args,**kwargs)
     
 
-class LCStudentApi(GenericAPIView,ListModelMixin,CreateModelMixin):
-    queryset = Student.objects.all()
-    serializer_class = StudentSerializer
-
+class LCStudentApi(GenericAPIView):
+    # queryset = Student.objects.all()
+    # serializer_class = StudentSerializer
+    # lookup_field = 'pk'
     def get(self,request,*args,**kwargs):
-        return self.list(request,*args,**kwargs)
-    def post(self,request,*args,**kwargs):
-        return self.create(request,*args,**kwargs)
+        std = self.request.GET.get('std', 0)
+        try:
+            student_obj = Student.objects.get(id=std)
+        except Student.DoesNotExist:
+            return Response({"error": "student not found"})
+
+        data = {
+            "id": student_obj.id,
+            "name": student_obj.first_name,
+            "city": student_obj.city
+        }
+        return Response(data)
+
 
 class RUDStudentApi(GenericAPIView,RetrieveModelMixin,UpdateModelMixin,DestroyModelMixin):
     queryset = Student.objects.all()
